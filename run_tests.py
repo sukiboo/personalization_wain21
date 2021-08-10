@@ -80,7 +80,8 @@ class TestDataGenerator:
         df = df.drop(['AVG', 'MIN', 'MAX'], axis=1)
         df.plot(figsize=(8,5), linewidth=3, alpha=.75)
         plt.tight_layout()
-        plt.savefig('./tests.pdf', format='pdf')
+        os.makedirs('./images/', exist_ok=True)
+        plt.savefig(f'./images/tests_{time.strftime("%Y-%m-%d_%H.%M.%S")}.pdf', format='pdf')
         plt.show()
 
     def save_variables(self):
@@ -104,7 +105,7 @@ class TestDataGenerator:
 if __name__ == '__main__':
 
     '''simulation parameters'''
-    params = {'num_tests': 10, 'num_sims': 10, 'timesteps': 2, 'seed': 0}
+    params = {'num_tests': 10, 'num_sims': 10, 'timesteps': 100000, 'seed': 0}
 
     '''environment parameters'''
     params_s = {'dim_layers': [10,10,10], 'weight_norm': 1.0}
