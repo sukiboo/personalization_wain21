@@ -36,16 +36,13 @@ class TestDataGenerator:
 
     def get_reward_vals(self, seeds):
         '''compute the average/minimial/maximal reward values'''
-        data = {}
-        for i in range(self.num_sims):
-            data[i] = {'AVG': {}, 'MIN': {}, 'MAX': {}}
-            self.env.set_seed(seed=seeds[i])
-            for j in range(self.timesteps):
-                s = self.env.reset()
-                r_avg, r_min, r_max = self.env.env.get_r_vals(s)
-                data[i]['AVG'][j+1] = r_avg.item()
-                data[i]['MIN'][j+1] = r_min.item()
-                data[i]['MAX'][j+1] = r_max.item()
+        data = {'AVG': {}, 'MIN': {}, 'MAX': {}}
+        for j in range(self.timesteps):
+            s = self.env.reset()
+            r_avg, r_min, r_max = self.env.env.get_r_vals(s)
+            data['AVG'][j+1] = r_avg.item()
+            data['MIN'][j+1] = r_min.item()
+            data['MAX'][j+1] = r_max.item()
         return data
 
     def run_tests(self, save=True, plot=True):
@@ -53,12 +50,19 @@ class TestDataGenerator:
         self.params_opt.update({'learn_steps': self.timesteps})
         for test in range(self.num_tests):
             print(f'running test {test+1}/{self.num_tests}...')
+            # setup environment and compute reward values
             self.setup_environment(seed=self.seed_list[test])
-            self.data[test] = self.get_reward_vals(seeds=self.sim_seeds[test])
+            reward_vals = self.get_reward_vals(seeds=self.sim_seeds[test])
+            # online rl
             online_rl = OnlineRL(self.env, self.params_opt)
             data_rl = online_rl.run_simulations(seeds=self.sim_seeds[test])
+            # update data
+            self.data[test] = {}
             for sim in range(self.num_sims):
+                self.data[test][sim] = {}
+                self.data[test][sim].update(reward_vals)
                 self.data[test][sim].update(data_rl[sim])
+        # save/plot experiment results
         if save:
             self.save_variables()
         self.process_test_data()
@@ -105,7 +109,7 @@ class TestDataGenerator:
 if __name__ == '__main__':
 
     '''simulation parameters'''
-    params = {'num_tests': 10, 'num_sims': 10, 'timesteps': 100000, 'seed': 0}
+    params = {'num_tests': 10, 'num_sims': 5, 'timesteps': 100000, 'seed': 0}
 
     '''environment parameters'''
     params_s = {'dim_layers': [10,10,10], 'weight_norm': 1.0}

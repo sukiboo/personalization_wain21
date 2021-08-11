@@ -20,10 +20,15 @@ class ContextualBanditHyperpersonalization:
         np.random.seed(self.seed)
         self.seed_s = np.random.randint(1e+09)
         self.seed_a = np.random.randint(1e+09)
+        self.reset_states()
+
+    def reset_states(self):
+        '''reset the observed states trajectory'''
+        self.rng = np.random.default_rng(seed=self.seed)
 
     def get_state(self, num_s=1):
-        '''generate observed state'''
-        self.S = np.clip(np.random.randn(num_s, self.dim_s), self.s_low, self.s_high)
+        '''generate observed states'''
+        self.S = np.clip(self.rng.standard_normal((num_s,self.dim_s)), self.s_low, self.s_high)
         return self.S
 
     def sample_actions(self):

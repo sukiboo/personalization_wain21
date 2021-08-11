@@ -30,6 +30,7 @@ class HyperpersonalizationGymEnv(gym.Env):
         np.random.seed(seed)
         self.seed(seed)
         self.action_space.seed(int(seed))
+        self.env.reset_states()
 
     def reset(self):
         self.state = self.env.get_state().flatten()
