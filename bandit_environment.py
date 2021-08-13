@@ -23,21 +23,14 @@ class HyperpersonalizationEnv:
         self.rng_s = np.random.default_rng(seed=self.seed)
         self.rng_a = np.random.default_rng(seed=self.seed+1)
         self.rng_r = np.random.default_rng(seed=self.seed+2)
-        # np.random.seed(self.seed)
-        # self.seed_s = np.random.randint(1e+09)
-        # self.seed_a = np.random.randint(1e+09)
 
     def get_state(self, num_s=1):
         '''generate observed states'''
-        # self.S = np.clip(self.rng.standard_normal((num_s,self.dim_s)), self.s_low, self.s_high)
-        ##self.S = np.clip(self.rng.standard_normal((num_s,self.dim_s)), self.s_low, self.s_high)
         self.S = self.rng_s.uniform(self.s_low, self.s_high, (num_s,self.dim_s))
         return self.S
 
     def sample_actions(self):
         '''generate the set of available actions'''
-        # self.A = np.random.randn(self.num_a, self.dim_a)
-        ##self.A = self.rng.standard_normal((self.num_a,self.dim_a))
         self.A = self.rng_a.uniform(self.a_low, self.a_high, (self.num_a,self.dim_a))
 
     def create_state_embedding(self):
@@ -68,9 +61,6 @@ class HyperpersonalizationEnv:
         self.create_state_embedding()
         self.create_action_embedding()
         self.r = lambda s,a: self.feature_relevance(self.feature_s(s), self.feature_a(a))
-        # self.r_avg = lambda s: self.r(s, self.A).mean(axis=1)
-        # self.r_min = lambda s: self.r(s, self.A).min(axis=1)
-        # self.r_max = lambda s: self.r(s, self.A).max(axis=1)
 
     def get_r_vals(self, s):
         '''compute the average, minimum, and maximum reward values for a given state'''
