@@ -1,13 +1,14 @@
 
 import numpy as np
+
 np.set_printoptions(precision=4)
 
 
 class SyntheticGaussianMapping:
     '''generate synthetic feature extractor'''
 
-    def __init__(self, params):
-        self.__dict__.update(params)
+    def __init__(self, params_map):
+        self.__dict__.update(params_map)
         self.initialize_weights()
         self.activation = lambda z: np.exp(-z**2)
 
