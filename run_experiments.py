@@ -1,16 +1,16 @@
 
 import numpy as np
-from bandit_environment import GymHyperpersonalizationEnv
-from online_rl import OnlineRL
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import dill as pickle
 import os
 import time
+from bandit_environment import GymHyperpersonalizationEnv, GymStateClusteringEnv
+from online_rl import OnlineRL
 
 np.set_printoptions(precision=4)
-sns.set_theme(style='darkgrid', palette='muted')
+sns.set_theme(style='darkgrid', palette='tab20', font='monospace')
 
 
 class ExperimentDataGenerator:
@@ -20,6 +20,7 @@ class ExperimentDataGenerator:
         self.__dict__.update(params_exp)
         self.params_env = params_env
         self.params_rl = params_rl
+        self.params_cluster = {'K': params_env['num_a'], 'timesteps': self.timesteps}
         self.configure()
 
     def configure(self):
@@ -29,6 +30,10 @@ class ExperimentDataGenerator:
         self.seed_rl = np.random.randint(1e+09)
         self.data = {}
         self.params_rl.update({'learn_steps': self.timesteps, 'seed': self.seed_rl})
+        self.save_name = f'exp_{self.params_env["num_a"]}_{self.params_env["dim_s"]}_'\
+                         + f'{self.params_env["dim_a"]}_{self.params_env["dim_feature"]}_'\
+                         + '-'.join(str(n) for n in self.params_env['r_arch']) + '_'\
+                         + '-'.join(str(n) for n in self.params_rl['net_arch'])
 
     def setup_environment(self, seed):
         '''setup the hyperpersonalization task with the given seed'''
@@ -42,10 +47,17 @@ class ExperimentDataGenerator:
         '''compute and save/plot experiment results'''
         for exp in range(self.num_exp):
             print(f'running experiment {exp+1}/{self.num_exp}...')
+            # get environment stats
             data_env = self.setup_environment(seed=self.exp_seeds[exp])
-            data_rl = OnlineRL(self.env, self.params_rl).run_simulations()
             self.data[exp] = data_env
+            # rl on full environment
+            data_rl = OnlineRL(self.env, self.params_rl).run_simulations()
             self.data[exp].update(data_rl)
+            # rl on clustered environment
+            self.env_cl = GymStateClusteringEnv(self.params_env, self.params_cluster)
+            data_rl_cl = OnlineRL(self.env_cl, self.params_rl).run_simulations()
+            data_rl_cl = {k + ' + K-means': v for k,v in data_rl_cl.items()}
+            self.data[exp].update(data_rl_cl)
         if save:
             self.save_variables()
         self.process_exp_data()
@@ -53,28 +65,31 @@ class ExperimentDataGenerator:
             self.plot_exp_data()
 
     def process_exp_data(self):
-        '''create the list of dataframes with experiment results'''
+        '''create the list of dataframes with normalized experiment results'''
         self.exp_data = []
         for exp in range(self.num_exp):
-            self.exp_data.append(pd.DataFrame(self.data[exp]))
+            df = pd.DataFrame(self.data[exp])
+            df = df.sub(df['AVG'], axis=0)
+            df = df.div(df['MAX'], axis=0)
+            df = df.drop(['AVG', 'MIN', 'MAX'], axis=1)
+            self.exp_data.append(df)
 
     def plot_exp_data(self):
-        '''plot results of the tests'''
-        df = sum(self.exp_data) / len(self.exp_data)
-        df = df.sub(df['AVG'], axis=0)
-        df = df.div(df['MAX'], axis=0)
-        df = df.drop(['AVG', 'MIN', 'MAX'], axis=1)
-        df.plot(figsize=(8,5), linewidth=3, alpha=.75)
+        '''plot normalized results of the experiments'''
+        df =  sum(self.exp_data) / self.num_exp
+        df = df.rolling(100).mean()
+        df = df.sort_index(axis=1)
+        df.plot(figsize=(8,4.2), linewidth=3, alpha=.75)
+        plt.legend(loc='lower right')
         plt.tight_layout()
         os.makedirs('./images/', exist_ok=True)
-        plt.savefig(f'./images/tests_{time.strftime("%Y-%m-%d_%H.%M.%S")}.pdf', format='pdf')
+        plt.savefig('./images/' + self.save_name + '.pdf', format='pdf')
         plt.show()
 
     def save_variables(self):
         '''save class variables to a file'''
         os.makedirs('./save/', exist_ok=True)
-        save_name = f'exp_{time.strftime("%Y-%m-%d_%H.%M.%S")}.pkl'
-        with open('./save/' + save_name, 'wb') as save_file:
+        with open('./save/' + self.save_name + '.pkl', 'wb') as save_file:
             pickle.dump(self.__dict__, save_file)
 
     def load_variables(self, save_name):
@@ -90,17 +105,13 @@ class ExperimentDataGenerator:
 
 if __name__ == '__main__':
     '''experiment parameters'''
-    params_exp = {'num_exp': 10, 'timesteps': 100000, 'seed': 0}
+    params_exp = {'num_exp': 3, 'timesteps': 100000, 'seed': 2021}
     '''environment parameters'''
-    params_s = {'dim_layers': [10,10,10], 'weight_norm': 1.0}
-    params_a = {'dim_layers': [10,10,10], 'weight_norm': 1.0}
-    params_env = {'dim_s': 100, 'dim_a': 100, 'dim_feature': 10, 'num_a': 1000,
-                  's_low': -1, 's_high': 1, 'a_low': -1, 'a_high': 1,
-                  'params_s': params_s, 'params_a': params_a}
+    params_env = {'num_a': 100, 'dim_s': 100, 'dim_a': 100, 'dim_feature': 10,
+                  's_low': -1, 's_high': 1, 'a_low': -1, 'a_high': 1, 'r_arch': [10,10,10]}
     '''rl parameters'''
-    params_rl = {'algos': ['A2C', 'DQN', 'PPO'], 'num_sim': 3}
+    params_rl = {'algos': ['A2C', 'DQN', 'PPO'], 'net_arch': [32,32,32], 'num_sim': 3}
     '''run simulations'''
     exp = ExperimentDataGenerator(params_exp, params_env, params_rl)
     exp.run_experiments()
-    # exp.load_variables('exps.pkl')
 

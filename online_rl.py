@@ -3,12 +3,11 @@ import numpy as np
 import gym
 import torch
 import stable_baselines3 as sb3
-from stable_baselines3.common.callbacks import BaseCallback
 
 np.set_printoptions(precision=4)
 
 
-class Callback(BaseCallback):
+class Callback(sb3.common.callbacks.BaseCallback):
     '''custom callback that records reward on each timestep'''
 
     def __init__(self, data, max_timestep):
@@ -31,6 +30,7 @@ class OnlineRL:
         self.__dict__.update(params_rl)
         self.env = env
         self.data = {}
+        self.policy_kwargs = {'net_arch': self.net_arch}
 
     def set_random_seed(self, seed):
         '''fix random seed for reproducibility'''
@@ -54,11 +54,11 @@ class OnlineRL:
     def train_agent(self, alg):
         '''train an rl agent with a specified algorithm'''
         if alg == 'A2C':
-            agent = sb3.A2C('MlpPolicy', self.env, verbose=0)
+            agent = sb3.A2C('MlpPolicy', self.env, verbose=0, policy_kwargs=self.policy_kwargs)
         elif alg == 'DQN':
-            agent = sb3.DQN('MlpPolicy', self.env, verbose=0)
+            agent = sb3.DQN('MlpPolicy', self.env, verbose=0, policy_kwargs=self.policy_kwargs)
         elif alg == 'PPO':
-            agent = sb3.PPO('MlpPolicy', self.env, verbose=0)
+            agent = sb3.PPO('MlpPolicy', self.env, verbose=0, policy_kwargs=self.policy_kwargs)
         else:
             raise NameError(f'\nalgorithm {alg} is not implemented...')
         data = []
