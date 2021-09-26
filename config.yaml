@@ -1,0 +1,23 @@
+# environment parameters
+params_env:
+    dim_s: 100
+    s_low: -1
+    s_high: 1
+    num_a: 100
+    dim_a: 100
+    a_low: -1
+    a_high: 1
+    dim_feature: 10
+    r_arch: [10,10,10]
+
+# RL parameters
+params_rl:
+    algos: ['A2C', 'DQN', 'PPO']
+    net_arch: [32,32,32]
+    num_sim: 3
+
+# experiment parameters
+params_exp:
+    num_exp: 3
+    timesteps: 100000
+    seed: 2021

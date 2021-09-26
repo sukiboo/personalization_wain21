@@ -6,6 +6,7 @@ import pandas as pd
 import dill as pickle
 import os
 import time
+import yaml
 from bandit_environment import GymHyperpersonalizationEnv, GymStateClusteringEnv
 from online_rl import OnlineRL
 
@@ -104,6 +105,7 @@ class ExperimentDataGenerator:
 
 
 if __name__ == '__main__':
+    """
     '''experiment parameters'''
     params_exp = {'num_exp': 3, 'timesteps': 100000, 'seed': 2021}
     '''environment parameters'''
@@ -111,7 +113,9 @@ if __name__ == '__main__':
                   's_low': -1, 's_high': 1, 'a_low': -1, 'a_high': 1, 'r_arch': [10,10,10]}
     '''rl parameters'''
     params_rl = {'algos': ['A2C', 'DQN', 'PPO'], 'net_arch': [32,32,32], 'num_sim': 3}
-    '''run simulations'''
-    exp = ExperimentDataGenerator(params_exp, params_env, params_rl)
+    """
+    '''setup and run experiments'''
+    config = yaml.load(open('./config.yaml'))
+    exp = ExperimentDataGenerator(config['params_exp'], config['params_env'], config['params_rl'])
     exp.run_experiments()
 
