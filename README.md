@@ -1,6 +1,6 @@
 # Synthetic Personalization Environment
 
-This repository contains the source code for the numerical experiments presented in the paper [On the Unreasonable Efficiency of State Space Clustering in Personalization Tasks](https://arxiv.org/).
+This repository contains the source code for the numerical experiments presented in the paper [On the Unreasonable Efficiency of State Space Clustering in Personalization Tasks](https://arxiv.org/abs/2112.13141).
 
 ## Installation
 * Install the requirements via `pip install -r requirements.txt`
